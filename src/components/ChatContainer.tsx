@@ -65,6 +65,8 @@ const ChatContainer: React.FC<ChatContainerProps> = ({ onEmotionChange, setOnMes
   }, [setOnMessageCallback]);
 
   const handleSendMessage = async (text: string) => {
+    if (!text.trim()) return;
+
     const userMessage: Message = {
       id: uuidv4(),
       text,
