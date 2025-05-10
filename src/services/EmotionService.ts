@@ -2,37 +2,38 @@ import { Emotion } from '../types';
 
 const emotionPatterns = {
   happy: [
-    'happy', 'glad', 'joy', 'excellent', 'great', 'awesome', 'wonderful', 
-    'perfect', 'good', 'love', 'like', 'enjoy', 'fun', 'haha', 'lol'
+    'massa', 'maneiro', 'legal', 'show', 'bacana', 'top', 'beleza', 
+    'dahora', 'irado', 'supimpa', 'valeu', 'boa', 'tranquilo'
   ],
   sad: [
-    'sad', 'sorry', 'unfortunate', 'regret', 'unhappy', 'upset', 'depressed', 
-    'disappointed', 'bad', 'miss', 'awful', 'terrible'
+    'pô', 'putz', 'triste', 'chateado', 'bolado', 'mal', 'caramba', 
+    'poxa', 'nossa', 'vixe', 'puts', 'barra'
   ],
   angry: [
-    'angry', 'mad', 'annoyed', 'frustrated', 'upset', 'hate', 'dislike',
-    'terrible', 'worst', 'furious', 'rage'
+    'vacilão', 'caô', 'mané', 'absurdo', 'palhaçada', 'sacanagem', 
+    'zuado', 'tenso', 'osso', 'embaçado'
   ],
   surprised: [
-    'wow', 'amazing', 'incredible', 'unbelievable', 'surprised', 'shocked',
-    'unexpected', 'astonished', 'what', 'really', 'seriously'
+    'caraca', 'ih', 'eita', 'nossa', 'vixe', 'meu deus', 'orra', 
+    'sinistro', 'que isso', 'não creio'
   ],
   thinking: [
-    'think', 'question', 'curious', 'wonder', 'how', 'why', 'what', 'when', 'where',
-    'consider', 'perhaps', 'maybe', 'possibly', 'hmm'
+    'tipo', 'então', 'assim', 'será', 'como', 'porque', 'qual', 
+    'quando', 'onde', 'pô', 'hmm'
   ],
   excited: [
-    'excited', 'amazing', 'fantastic', 'incredible', 'wonderful', 'wow', 'cool',
-    'awesome', 'super', 'yay', 'woohoo', 'yes'
+    'caraca', 'massa', 'maneiro', 'show', 'top', 'dahora', 'irado',
+    'sinistro', 'animal', 'sensacional'
   ],
   love: [
-    'love', 'adore', 'heart', 'sweet', 'darling', 'dear', 'lovely'
+    'amor', 'querido', 'fofo', 'lindo', 'meu bem', 'coração', 'fofura'
   ],
   sleepy: [
-    'tired', 'sleepy', 'exhausted', 'rest', 'nap', 'yawn', 'zzz'
+    'sono', 'cansado', 'exausto', 'dormindo', 'cochilando', 'bocejando'
   ],
   confused: [
-    'confused', 'weird', 'strange', 'odd', 'puzzled', 'unsure', 'lost'
+    'viajou', 'nada a ver', 'que isso', 'que que é isso', 'tô boiando',
+    'tô perdido', 'não entendi'
   ]
 };
 
@@ -65,13 +66,14 @@ const getBrazilianVoice = (): SpeechSynthesisVoice | null => {
   }
 
   const ptBRVoice = voices.find(voice => 
-    voice.lang.includes('pt-BR')
+    voice.lang.includes('pt-BR') && voice.name.toLowerCase().includes('female')
   );
 
   if (ptBRVoice) return ptBRVoice;
 
   return voices.find(voice => 
-    voice.lang.includes('pt') || voice.lang.includes('por')
+    (voice.lang.includes('pt') || voice.lang.includes('por')) &&
+    voice.name.toLowerCase().includes('female')
   ) || null;
 };
 
@@ -133,12 +135,18 @@ export const getRandomEmotion = (): Emotion => {
 };
 
 const voiceModulation = {
-  basePitch: 1.0,
+  basePitch: 1.2, // Pitch base mais alto para voz feminina
   baseRate: 1.0,
   emotional: {
-    pitchRange: 0.3,
-    rateRange: 0.2,
-    volumeRange: 0.15
+    pitchRange: 0.4, // Maior variação de pitch para sotaque carioca
+    rateRange: 0.3,  // Maior variação de velocidade para expressividade
+    volumeRange: 0.2
+  },
+  // Características do sotaque carioca
+  carioca: {
+    musicalityFactor: 1.2,    // Fator de musicalidade do sotaque
+    rhythmVariation: 0.15,    // Variação do ritmo característico
+    intonationCurve: 0.25     // Curva de entonação ascendente no fim das frases
   }
 };
 
@@ -153,49 +161,72 @@ export const speakMessage = (text: string, emotion: Emotion) => {
     }
 
     utterance.lang = 'pt-BR';
-    utterance.pitch = voiceModulation.basePitch;
+    
+    // Base da voz feminina carioca
+    utterance.pitch = voiceModulation.basePitch * voiceModulation.carioca.musicalityFactor;
     utterance.rate = voiceModulation.baseRate;
 
+    // Ajustes específicos por emoção com características cariocas
     switch (emotion) {
       case 'happy':
       case 'excited':
-        utterance.pitch = voiceModulation.basePitch + (voiceModulation.emotional.pitchRange * emotionIntensity);
-        utterance.rate = voiceModulation.baseRate + (voiceModulation.emotional.rateRange * emotionIntensity);
+        utterance.pitch = voiceModulation.basePitch + 
+          (voiceModulation.emotional.pitchRange * emotionIntensity * voiceModulation.carioca.musicalityFactor);
+        utterance.rate = voiceModulation.baseRate + 
+          (voiceModulation.emotional.rateRange * emotionIntensity) + 
+          voiceModulation.carioca.rhythmVariation;
         utterance.volume = 1;
         break;
       case 'sad':
-        utterance.pitch = voiceModulation.basePitch - (voiceModulation.emotional.pitchRange * 0.5);
-        utterance.rate = voiceModulation.baseRate - (voiceModulation.emotional.rateRange * 0.4);
+        utterance.pitch = voiceModulation.basePitch - 
+          (voiceModulation.emotional.pitchRange * 0.3);
+        utterance.rate = voiceModulation.baseRate - 
+          (voiceModulation.emotional.rateRange * 0.4) + 
+          voiceModulation.carioca.rhythmVariation;
         utterance.volume = 0.85;
         break;
       case 'angry':
-        utterance.pitch = voiceModulation.basePitch + (voiceModulation.emotional.pitchRange * emotionIntensity * 0.8);
-        utterance.rate = voiceModulation.baseRate + (voiceModulation.emotional.rateRange * emotionIntensity * 0.6);
+        utterance.pitch = voiceModulation.basePitch + 
+          (voiceModulation.emotional.pitchRange * emotionIntensity * 0.9);
+        utterance.rate = voiceModulation.baseRate + 
+          (voiceModulation.emotional.rateRange * emotionIntensity * 0.7) + 
+          voiceModulation.carioca.rhythmVariation;
         utterance.volume = 1;
         break;
       case 'surprised':
-        utterance.pitch = voiceModulation.basePitch + (voiceModulation.emotional.pitchRange * 0.7);
-        utterance.rate = voiceModulation.baseRate + (voiceModulation.emotional.rateRange * 0.4);
+        utterance.pitch = voiceModulation.basePitch + 
+          (voiceModulation.emotional.pitchRange * 0.8 * voiceModulation.carioca.musicalityFactor);
+        utterance.rate = voiceModulation.baseRate + 
+          (voiceModulation.emotional.rateRange * 0.5) + 
+          voiceModulation.carioca.intonationCurve;
         utterance.volume = 1;
         break;
       case 'love':
-        utterance.pitch = voiceModulation.basePitch + (voiceModulation.emotional.pitchRange * 0.4);
-        utterance.rate = voiceModulation.baseRate - (voiceModulation.emotional.rateRange * 0.2);
+        utterance.pitch = voiceModulation.basePitch + 
+          (voiceModulation.emotional.pitchRange * 0.5 * voiceModulation.carioca.musicalityFactor);
+        utterance.rate = voiceModulation.baseRate - 
+          (voiceModulation.emotional.rateRange * 0.1) + 
+          voiceModulation.carioca.rhythmVariation;
         utterance.volume = 0.9;
         break;
       case 'thinking':
-        utterance.pitch = voiceModulation.basePitch - (voiceModulation.emotional.pitchRange * 0.2);
-        utterance.rate = voiceModulation.baseRate - (voiceModulation.emotional.rateRange * 0.3);
+        utterance.pitch = voiceModulation.basePitch - 
+          (voiceModulation.emotional.pitchRange * 0.1);
+        utterance.rate = voiceModulation.baseRate - 
+          (voiceModulation.emotional.rateRange * 0.2) + 
+          voiceModulation.carioca.rhythmVariation;
         utterance.volume = 0.95;
         break;
       case 'sleepy':
-        utterance.pitch = voiceModulation.basePitch - (voiceModulation.emotional.pitchRange * 0.4);
-        utterance.rate = voiceModulation.baseRate - (voiceModulation.emotional.rateRange * 0.5);
+        utterance.pitch = voiceModulation.basePitch - 
+          (voiceModulation.emotional.pitchRange * 0.3);
+        utterance.rate = voiceModulation.baseRate - 
+          (voiceModulation.emotional.rateRange * 0.4);
         utterance.volume = 0.8;
         break;
       default:
-        utterance.pitch = voiceModulation.basePitch;
-        utterance.rate = voiceModulation.baseRate;
+        utterance.pitch = voiceModulation.basePitch * voiceModulation.carioca.musicalityFactor;
+        utterance.rate = voiceModulation.baseRate + voiceModulation.carioca.rhythmVariation;
         utterance.volume = 1;
     }
 
