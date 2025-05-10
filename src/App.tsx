@@ -41,60 +41,83 @@ function App() {
 
   useEffect(() => {
     if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      recognition.lang = 'pt-BR';
-      
-      recognition.onstart = () => {
-        setShowChat(true);
-        setHasInteracted(true);
-        setInterimTranscript('');
-        if (silenceTimer) clearTimeout(silenceTimer);
-      };
+      try {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'pt-BR';
+        
+        recognition.onstart = () => {
+          setShowChat(true);
+          setHasInteracted(true);
+          setInterimTranscript('');
+          if (silenceTimer) clearTimeout(silenceTimer);
+        };
 
-      recognition.onresult = (event) => {
-        const transcript = Array.from(event.results)
-          .map(result => result[0].transcript)
-          .join('');
+        recognition.onresult = (event) => {
+          try {
+            let finalTranscript = '';
+            let interimTranscript = '';
 
-        setInterimTranscript(transcript);
+            for (let i = 0; i < event.results.length; i++) {
+              if (event.results[i].isFinal) {
+                finalTranscript += event.results[i][0].transcript;
+              } else {
+                interimTranscript += event.results[i][0].transcript;
+              }
+            }
 
-        if (event.results[0].isFinal) {
-          const finalTranscript = transcript.trim();
-          if (finalTranscript && onMessageCallback) {
-            onMessageCallback(finalTranscript);
+            setInterimTranscript(interimTranscript);
+
+            if (finalTranscript && onMessageCallback) {
+              onMessageCallback(finalTranscript.trim());
+              recognition.stop();
+            }
+          } catch (error) {
+            console.error('Error processing speech result:', error);
+            recognition.stop();
+          }
+        };
+
+        recognition.onaudiostart = () => {
+          if (silenceTimer) clearTimeout(silenceTimer);
+          
+          const timer = setTimeout(() => {
+            recognition.stop();
+          }, 10000);
+          
+          setSilenceTimer(timer);
+        };
+
+        recognition.onend = () => {
+          if (silenceTimer) clearTimeout(silenceTimer);
+          setIsListening(false);
+          setPushToTalk(false);
+          setInterimTranscript('');
+        };
+
+        recognition.onerror = (event) => {
+          console.error('Speech recognition error:', event.error);
+          if (event.error === 'not-allowed') {
+            alert('Por favor, permita o acesso ao microfone para usar o recurso de voz.');
           }
           recognition.stop();
-        }
-      };
+          setIsListening(false);
+          setPushToTalk(false);
+        };
 
-      recognition.onaudiostart = () => {
-        if (silenceTimer) clearTimeout(silenceTimer);
-        
-        const timer = setTimeout(() => {
-          recognition.stop();
-        }, 5000);
-        
-        setSilenceTimer(timer);
-      };
-
-      recognition.onend = () => {
-        if (silenceTimer) clearTimeout(silenceTimer);
-        setIsListening(false);
-        setPushToTalk(false);
-        setInterimTranscript('');
-      };
-
-      recognition.onerror = (event) => {
-        console.error('Speech recognition error:', event.error);
-        recognition.stop();
-      };
-
-      setRecognition(recognition);
+        setRecognition(recognition);
+      } catch (error) {
+        console.error('Error initializing speech recognition:', error);
+        alert('Erro ao inicializar o reconhecimento de voz. Por favor, tente novamente.');
+      }
+    } else {
+      console.warn('Speech recognition not supported in this browser');
+      alert('Seu navegador não suporta reconhecimento de voz.');
     }
-  }, [onMessageCallback]);
+  }, [onMessageCallback, silenceTimer]);
 
   const handleSplashComplete = () => {
     setShowSplash(false);
@@ -102,24 +125,42 @@ function App() {
   };
 
   const toggleListening = () => {
-    if (!recognition) return;
+    if (!recognition) {
+      alert('Reconhecimento de voz não suportado neste navegador.');
+      return;
+    }
     
-    if (isListening) {
-      recognition.stop();
-    } else {
-      recognition.start();
-      setIsListening(true);
+    try {
+      if (isListening) {
+        recognition.stop();
+      } else {
+        recognition.start();
+        setIsListening(true);
+      }
+    } catch (error) {
+      console.error('Error toggling speech recognition:', error);
+      setIsListening(false);
+      alert('Erro ao iniciar o reconhecimento de voz. Por favor, tente novamente.');
     }
   };
 
   const handlePushToTalk = () => {
-    if (!recognition) return;
+    if (!recognition) {
+      alert('Reconhecimento de voz não suportado neste navegador.');
+      return;
+    }
     
-    if (!pushToTalk) {
-      recognition.start();
-      setPushToTalk(true);
-    } else {
-      recognition.stop();
+    try {
+      if (!pushToTalk) {
+        recognition.start();
+        setPushToTalk(true);
+      } else {
+        recognition.stop();
+      }
+    } catch (error) {
+      console.error('Error with push-to-talk:', error);
+      setPushToTalk(false);
+      alert('Erro ao usar o push-to-talk. Por favor, tente novamente.');
     }
   };
 
