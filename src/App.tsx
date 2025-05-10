@@ -26,7 +26,6 @@ function App() {
     return () => clearInterval(blinkTimer);
   }, []);
 
-  // Random emotion changes only before first interaction
   useEffect(() => {
     const emotionTimer = setInterval(() => {
       if (!showChat && !hasInteracted) {
@@ -67,7 +66,6 @@ function App() {
 
   const handleSplashComplete = () => {
     setShowSplash(false);
-    setShowChat(true);
     setHasInteracted(true);
   };
 
@@ -100,6 +98,11 @@ function App() {
     setIsMuted(newMutedState);
   };
 
+  const handleToggleChat = () => {
+    setShowChat(!showChat);
+    setHasInteracted(true);
+  };
+
   if (showSplash) {
     return <SplashScreen onComplete={handleSplashComplete} />;
   }
@@ -107,57 +110,61 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 flex flex-col">
       <main className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-4xl">
-          <VirtualFriend currentEmotion={currentEmotion} blinking={blinking} />
-          
-          <div className="fixed bottom-8 right-8 flex flex-col gap-4">
-            <button
-              onClick={handleToggleMute}
-              className={`${
-                isMuted ? 'bg-red-600 hover:bg-red-700' : 'bg-purple-600 hover:bg-purple-700'
-              } text-white p-4 rounded-full shadow-lg transition-all`}
-              aria-label={isMuted ? "Unmute" : "Mute"}
-            >
-              {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
-            </button>
-
-            <button
-              onClick={() => setShowChat(!showChat)}
-              className="bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-full shadow-lg transition-all"
-              aria-label="Toggle chat"
-            >
-              <MessageSquare size={24} />
-            </button>
-            
-            <button
-              onClick={toggleListening}
-              className={`${
-                isListening ? 'bg-red-600 hover:bg-red-700' : 'bg-purple-600 hover:bg-purple-700'
-              } text-white p-4 rounded-full shadow-lg transition-all`}
-              aria-label={isListening ? "Stop listening" : "Start listening"}
-            >
-              {isListening ? <MicOff size={24} /> : <Mic size={24} />}
-            </button>
-            
-            <button
-              onMouseDown={handlePushToTalk}
-              onMouseUp={handlePushToTalk}
-              onMouseLeave={() => pushToTalk && handlePushToTalk()}
-              className={`${
-                pushToTalk ? 'bg-red-600 hover:bg-red-700' : 'bg-purple-600 hover:bg-purple-700'
-              } text-white p-4 rounded-full shadow-lg transition-all`}
-              aria-label="Push to talk"
-            >
-              <Mic size={24} />
-            </button>
+        <div className="w-full max-w-4xl flex flex-col md:flex-row items-center justify-center gap-8">
+          <div className="w-full md:w-1/2">
+            <VirtualFriend currentEmotion={currentEmotion} blinking={blinking} />
           </div>
+          
+          {showChat && (
+            <div className="w-full md:w-1/2 h-[600px]">
+              <ChatContainer onEmotionChange={setCurrentEmotion} />
+            </div>
+          )}
         </div>
       </main>
 
-      <div className={`fixed bottom-4 right-4 md:bottom-24 md:right-24 w-full max-w-sm md:max-w-md lg:max-w-lg xl:w-96 h-[600px] z-50 transition-all duration-300 transform ${
-        showChat ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
-      }`}>
-        <ChatContainer onEmotionChange={setCurrentEmotion} />
+      <div className="fixed bottom-8 right-8 flex flex-col gap-4">
+        <button
+          onClick={handleToggleMute}
+          className={`${
+            isMuted ? 'bg-red-600 hover:bg-red-700' : 'bg-purple-600 hover:bg-purple-700'
+          } text-white p-4 rounded-full shadow-lg transition-all`}
+          aria-label={isMuted ? "Unmute" : "Mute"}
+        >
+          {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
+        </button>
+
+        <button
+          onClick={handleToggleChat}
+          className={`${
+            showChat ? 'bg-purple-800' : 'bg-purple-600 hover:bg-purple-700'
+          } text-white p-4 rounded-full shadow-lg transition-all`}
+          aria-label="Toggle chat"
+        >
+          <MessageSquare size={24} />
+        </button>
+        
+        <button
+          onClick={toggleListening}
+          className={`${
+            isListening ? 'bg-red-600 hover:bg-red-700' : 'bg-purple-600 hover:bg-purple-700'
+          } text-white p-4 rounded-full shadow-lg transition-all`}
+          aria-label={isListening ? "Stop listening" : "Start listening"}
+        >
+          {isListening ? <MicOff size={24} /> : <Mic size={24} />}
+        </button>
+        
+        <button
+          onMouseDown={handlePushToTalk}
+          onMouseUp={handlePushToTalk}
+          onMouseLeave={() => pushToTalk && handlePushToTalk()}
+          className={`${
+            pushToTalk ? 'bg-red-600 hover:bg-red-700' : 'bg-purple-600 hover:bg-purple-700'
+          } text-white p-4 rounded-full shadow-lg transition-all`}
+          aria-label="Push to talk"
+        >
+          <Mic size={24} />
+        </button>
       </div>
     </div>
   );
