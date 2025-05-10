@@ -40,6 +40,54 @@ let isMuted = false;
 let lastEmotion: Emotion = 'happy';
 let emotionIntensity = 1;
 
+// Initialize speech synthesis and get voices
+let synth = window.speechSynthesis;
+let voices: SpeechSynthesisVoice[] = [];
+
+const initVoices = () => {
+  voices = synth.getVoices();
+};
+
+// Load voices when they become available
+if (typeof speechSynthesis !== 'undefined') {
+  speechSynthesis.onvoiceschanged = initVoices;
+  initVoices();
+}
+
+// Function to get the best American female voice
+const getAmericanFemaleVoice = (): SpeechSynthesisVoice | null => {
+  const preferredVoices = [
+    'Google US English Female',
+    'Microsoft Zira Desktop',
+    'Samantha',
+    'Victoria'
+  ];
+
+  // First try to find one of our preferred voices
+  for (const preferredVoice of preferredVoices) {
+    const voice = voices.find(v => v.name === preferredVoice);
+    if (voice) return voice;
+  }
+
+  // If no preferred voice is found, try to find any US English female voice
+  const americanVoice = voices.find(voice => 
+    voice.lang.includes('en-US') && 
+    (voice.name.toLowerCase().includes('female') || 
+     voice.name.toLowerCase().includes('woman'))
+  );
+
+  if (americanVoice) return americanVoice;
+
+  // Fallback to any English female voice
+  const englishVoice = voices.find(voice => 
+    voice.lang.includes('en') && 
+    (voice.name.toLowerCase().includes('female') || 
+     voice.name.toLowerCase().includes('woman'))
+  );
+
+  return englishVoice || null;
+};
+
 export const toggleMute = () => {
   isMuted = !isMuted;
   if (isMuted) {
@@ -55,7 +103,6 @@ export const detectEmotion = (text: string): { emotion: Emotion; intensity: numb
 
   const lowerText = text.toLowerCase();
 
-  // Calculate emotion scores
   Object.entries(emotionPatterns).forEach(([emotion, patterns]) => {
     const matchCount = patterns.reduce((count, pattern) => {
       const matches = (lowerText.match(new RegExp(pattern, 'gi')) || []).length;
@@ -65,19 +112,17 @@ export const detectEmotion = (text: string): { emotion: Emotion; intensity: numb
     if (matchCount > highestScore) {
       highestScore = matchCount;
       detectedEmotion = emotion as Emotion;
-      intensity = Math.min(1.5, 1 + (matchCount * 0.1)); // Increase intensity based on matches
+      intensity = Math.min(1.5, 1 + (matchCount * 0.1));
     }
   });
 
-  // Special cases
   if (lowerText.includes('?')) {
     detectedEmotion = 'thinking';
     intensity = 1.2;
   }
 
-  // Emotion persistence
   if (detectedEmotion === lastEmotion) {
-    intensity = Math.min(1.5, intensity + 0.1); // Increase intensity for persistent emotions
+    intensity = Math.min(1.5, intensity + 0.1);
   }
 
   lastEmotion = detectedEmotion;
@@ -87,7 +132,6 @@ export const detectEmotion = (text: string): { emotion: Emotion; intensity: numb
 };
 
 export const getRandomBlinkInterval = (): number => {
-  // More frequent blinking for certain emotions
   const baseInterval = Math.floor(Math.random() * 3000) + 2000;
   return lastEmotion === 'surprised' || lastEmotion === 'excited' 
     ? baseInterval * 0.7 
@@ -106,30 +150,29 @@ export const speakMessage = (text: string, emotion: Emotion) => {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     
-    const voices = speechSynthesis.getVoices();
-    const femaleVoice = voices.find(voice => 
-      voice.name.toLowerCase().includes('female') || 
-      voice.name.toLowerCase().includes('samantha') ||
-      voice.name.toLowerCase().includes('victoria')
-    );
-
+    const femaleVoice = getAmericanFemaleVoice();
     if (femaleVoice) {
       utterance.voice = femaleVoice;
     }
-    
-    // Enhanced emotion-based voice parameters
+
+    // Base voice settings for American accent
+    utterance.lang = 'en-US';
+    utterance.pitch = 1.2; // Slightly higher pitch for feminine voice
+    utterance.rate = 1.0;  // Normal speaking rate
+
+    // Emotion-specific voice modulations
     switch (emotion) {
       case 'happy':
       case 'excited':
-        utterance.pitch = 1.3 * emotionIntensity;
-        utterance.rate = 1.1 * emotionIntensity;
+        utterance.pitch = 1.4 * emotionIntensity;
+        utterance.rate = 1.15 * emotionIntensity;
         break;
       case 'sad':
         utterance.pitch = 1.1;
-        utterance.rate = 0.9;
+        utterance.rate = 0.85;
         break;
       case 'angry':
-        utterance.pitch = 1.4 * emotionIntensity;
+        utterance.pitch = 1.3 * emotionIntensity;
         utterance.rate = 1.2 * emotionIntensity;
         break;
       case 'surprised':
@@ -139,6 +182,14 @@ export const speakMessage = (text: string, emotion: Emotion) => {
       case 'love':
         utterance.pitch = 1.3;
         utterance.rate = 0.95;
+        break;
+      case 'thinking':
+        utterance.pitch = 1.2;
+        utterance.rate = 0.9;
+        break;
+      case 'sleepy':
+        utterance.pitch = 1.1;
+        utterance.rate = 0.8;
         break;
       default:
         utterance.pitch = 1.2;
