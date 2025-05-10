@@ -50,23 +50,22 @@ Never mention that you're an AI or language model.
 Respond as if you're a quirky cartoon character with expressive emotions.
 `;
 
-const detectEmotionFromASCII = (text: string): Emotion => {
-  // Map ASCII patterns to emotions
-  const patterns = {
-    happy: ['^‿^', '＾▽＾', '◕‿◕'],
-    sad: ['╥﹏╥', 'ω；', '•́︿•̀'],
-    angry: ['ಠ益ಠ', 'Д´', 'ノಠ'],
-    surprised: ['⊙_⊙', '°o°', '◎_◎'],
-    thinking: ['¬‿¬', '￢_￢', '_ʖ'],
-    sleepy: ['￣ω￣', '-.-)'],
-    excited: ['＾▽＾', '◕‿◕'],
-  };
+const patterns = {
+  happy: ['^‿^', '＾▽＾', '◕‿◕'],
+  sad: ['╥﹏╥', 'ω；', '•́︿•̀'],
+  angry: ['ಠ益ಠ', 'Д´', 'ノಠ'],
+  surprised: ['⊙_⊙', '°o°', '◎_◎'],
+  thinking: ['¬‿¬', '￢_￢', '_ʖ'],
+  sleepy: ['￣ω￣', '-.-)'],
+  excited: ['＾▽＾', '◕‿◕'],
+};
 
+const detectEmotionFromASCII = (text: string): Emotion => {
   // Check first line for ASCII art
   const firstLine = text.split('\n')[0];
   
-  for (const [emotion, patterns] of Object.entries(patterns)) {
-    if (patterns.some(pattern => firstLine.includes(pattern))) {
+  for (const [emotion, patternList] of Object.entries(patterns)) {
+    if (patternList.some(pattern => firstLine.includes(pattern))) {
       return emotion as Emotion;
     }
   }
