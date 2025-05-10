@@ -2,101 +2,46 @@ import React from 'react';
 import { EyesProps } from '../types';
 
 const Eyes: React.FC<EyesProps> = ({ emotion, blinking }) => {
-  const baseEyeStyle = "w-32 h-32 md:w-40 md:h-40 relative transition-all duration-300";
-  
-  const getEyeStyles = () => {
+  const baseEyeStyle = "relative w-20 h-28 md:w-24 md:h-32 bg-black rounded-full overflow-hidden transition-all duration-200 ease-linear shadow-inner";
+
+  const getEyeTransform = () => {
     switch (emotion) {
       case 'happy':
-        return {
-          containerStyle: `${baseEyeStyle} bg-blue-500`,
-          pupilStyle: "absolute w-12 h-12 md:w-16 md:h-16 bg-black",
-          pupilPosition: "top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2",
-          shape: "square"
-        };
+        return 'scaleY(0.7)';
       case 'sad':
-        return {
-          containerStyle: `${baseEyeStyle} bg-blue-400`,
-          pupilStyle: "absolute w-12 h-12 md:w-16 md:h-16 bg-black",
-          pupilPosition: "bottom-6 left-1/2 transform -translate-x-1/2",
-          shape: "pentagon"
-        };
+        return 'scaleY(1.2) rotate(-10deg)';
       case 'angry':
-        return {
-          containerStyle: `${baseEyeStyle} bg-red-500 transform -rotate-12 animate-shake`,
-          pupilStyle: "absolute w-12 h-12 md:w-16 md:h-16 bg-black",
-          pupilPosition: "top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2",
-          shape: "triangle"
-        };
+        return 'rotate(15deg)';
       case 'surprised':
-        return {
-          containerStyle: `${baseEyeStyle} bg-purple-400`,
-          pupilStyle: "absolute w-16 h-16 md:w-20 md:h-20 bg-black",
-          pupilPosition: "top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2",
-          shape: "octagon"
-        };
+        return 'scale(1.2)';
       case 'thinking':
-        return {
-          containerStyle: `${baseEyeStyle} bg-green-400`,
-          pupilStyle: "absolute w-10 h-10 md:w-14 md:h-14 bg-black",
-          pupilPosition: "top-1/2 right-4 transform -translate-y-1/2",
-          shape: "hexagon"
-        };
+        return 'translateX(4px)';
       case 'excited':
-        return {
-          containerStyle: `${baseEyeStyle} bg-pink-400 animate-bounce-slow`,
-          pupilStyle: "absolute w-12 h-12 md:w-16 md:h-16 bg-black",
-          pupilPosition: "top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2",
-          shape: "star"
-        };
+        return 'scale(1.1) rotate(-5deg)';
       case 'sleepy':
-        return {
-          containerStyle: `${baseEyeStyle} bg-indigo-400`,
-          pupilStyle: "absolute w-24 h-8 bg-black",
-          pupilPosition: "top-1/2 transform -translate-y-1/2",
-          shape: "rectangle"
-        };
+        return 'scaleY(0.2)';
       default:
-        return {
-          containerStyle: `${baseEyeStyle} bg-blue-500`,
-          pupilStyle: "absolute w-12 h-12 md:w-16 md:h-16 bg-black",
-          pupilPosition: "top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2",
-          shape: "square"
-        };
+        return 'scale(1)';
     }
   };
 
-  const styles = getEyeStyles();
-  const blinkClass = blinking ? "scale-y-[0.1]" : "";
+  const pupilStyle = "absolute top-1/4 left-1/4 w-1/2 h-1/2 bg-gradient-to-br from-gray-300 to-white rounded-full shadow";
 
-  const getShapeClass = (shape: string) => {
-    switch (shape) {
-      case 'triangle':
-        return 'clip-path-triangle';
-      case 'pentagon':
-        return 'clip-path-pentagon';
-      case 'hexagon':
-        return 'clip-path-hexagon';
-      case 'octagon':
-        return 'clip-path-octagon';
-      case 'star':
-        return 'clip-path-star';
-      case 'rectangle':
-        return 'rounded-none';
-      case 'square':
-        return 'rounded-none';
-      default:
-        return 'rounded-none';
-    }
-  };
+  const blinkStyle = blinking ? 'scaleY(0.1)' : '';
 
   return (
-    <div className="flex justify-center space-x-8 md:space-x-12">
-      <div className={`${styles.containerStyle} ${blinkClass} ${getShapeClass(styles.shape)}`}>
-        <div className={`${styles.pupilStyle} ${styles.pupilPosition}`}></div>
-      </div>
-      <div className={`${styles.containerStyle} ${blinkClass} ${getShapeClass(styles.shape)}`}>
-        <div className={`${styles.pupilStyle} ${styles.pupilPosition}`}></div>
-      </div>
+    <div className="flex justify-center gap-12 md:gap-16">
+      {[0, 1].map((i) => (
+        <div
+          key={i}
+          className={baseEyeStyle}
+          style={{
+            transform: `${getEyeTransform()} ${blinkStyle} ${emotion === 'angry' && i === 1 ? 'rotate(-15deg)' : ''}`
+          }}
+        >
+          <div className={pupilStyle}></div>
+        </div>
+      ))}
     </div>
   );
 };

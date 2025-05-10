@@ -2,17 +2,31 @@ import React from 'react';
 import { ChatHistoryProps } from '../types';
 
 const ChatHistory: React.FC<ChatHistoryProps> = ({ messages }) => {
-  // Reference for auto-scrolling
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when messages change
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Format timestamp
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const formatMessage = (text: string) => {
+    // Split message into ASCII art and content
+    const [firstLine, ...rest] = text.split('\n');
+    const hasASCII = /[^\w\s,.!?]/.test(firstLine);
+    
+    if (hasASCII) {
+      return (
+        <>
+          <div className="font-mono text-lg mb-1">{firstLine}</div>
+          <div>{rest.join('\n')}</div>
+        </>
+      );
+    }
+    
+    return text;
   };
 
   return (
@@ -34,7 +48,7 @@ const ChatHistory: React.FC<ChatHistoryProps> = ({ messages }) => {
                   : 'bg-gray-200 text-gray-800 rounded-tl-none'
               }`}
             >
-              <p className="break-words">{message.text}</p>
+              {formatMessage(message.text)}
               <p
                 className={`text-xs mt-1 ${
                   message.sender === 'user' ? 'text-purple-200' : 'text-gray-500'
