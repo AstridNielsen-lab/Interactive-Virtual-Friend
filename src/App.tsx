@@ -15,11 +15,7 @@ function App() {
   const [pushToTalk, setPushToTalk] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setShowSplash(false), 3000);
-    return () => clearTimeout(timer);
-  }, []);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   useEffect(() => {
     const blinkTimer = setInterval(() => {
@@ -30,16 +26,16 @@ function App() {
     return () => clearInterval(blinkTimer);
   }, []);
 
-  // Random emotion changes
+  // Random emotion changes only before first interaction
   useEffect(() => {
     const emotionTimer = setInterval(() => {
-      if (!showChat) {
+      if (!showChat && !hasInteracted) {
         setCurrentEmotion(getRandomEmotion());
       }
     }, 5000);
 
     return () => clearInterval(emotionTimer);
-  }, [showChat]);
+  }, [showChat, hasInteracted]);
 
   useEffect(() => {
     if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
@@ -68,6 +64,12 @@ function App() {
       setRecognition(recognition);
     }
   }, [isListening, pushToTalk]);
+
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+    setShowChat(true);
+    setHasInteracted(true);
+  };
 
   const toggleListening = () => {
     if (!recognition) return;
@@ -99,7 +101,7 @@ function App() {
   };
 
   if (showSplash) {
-    return <SplashScreen />;
+    return <SplashScreen onComplete={handleSplashComplete} />;
   }
 
   return (
@@ -114,6 +116,7 @@ function App() {
               className={`${
                 isMuted ? 'bg-red-600 hover:bg-red-700' : 'bg-purple-600 hover:bg-purple-700'
               } text-white p-4 rounded-full shadow-lg transition-all`}
+              aria-label={isMuted ? "Unmute" : "Mute"}
             >
               {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
             </button>
@@ -121,6 +124,7 @@ function App() {
             <button
               onClick={() => setShowChat(!showChat)}
               className="bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-full shadow-lg transition-all"
+              aria-label="Toggle chat"
             >
               <MessageSquare size={24} />
             </button>
@@ -130,6 +134,7 @@ function App() {
               className={`${
                 isListening ? 'bg-red-600 hover:bg-red-700' : 'bg-purple-600 hover:bg-purple-700'
               } text-white p-4 rounded-full shadow-lg transition-all`}
+              aria-label={isListening ? "Stop listening" : "Start listening"}
             >
               {isListening ? <MicOff size={24} /> : <Mic size={24} />}
             </button>
@@ -141,6 +146,7 @@ function App() {
               className={`${
                 pushToTalk ? 'bg-red-600 hover:bg-red-700' : 'bg-purple-600 hover:bg-purple-700'
               } text-white p-4 rounded-full shadow-lg transition-all`}
+              aria-label="Push to talk"
             >
               <Mic size={24} />
             </button>
@@ -148,11 +154,11 @@ function App() {
         </div>
       </main>
 
-      {showChat && (
-        <div className="fixed bottom-24 right-24 w-96 h-[600px] z-50">
-          <ChatContainer onEmotionChange={setCurrentEmotion} />
-        </div>
-      )}
+      <div className={`fixed bottom-4 right-4 md:bottom-24 md:right-24 w-full max-w-sm md:max-w-md lg:max-w-lg xl:w-96 h-[600px] z-50 transition-all duration-300 transform ${
+        showChat ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
+      }`}>
+        <ChatContainer onEmotionChange={setCurrentEmotion} />
+      </div>
     </div>
   );
 }
