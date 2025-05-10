@@ -54,13 +54,13 @@ if (typeof speechSynthesis !== 'undefined') {
   initVoices();
 }
 
-// Function to get the best American female voice
-const getAmericanFemaleVoice = (): SpeechSynthesisVoice | null => {
+// Function to get the best Brazilian Portuguese female voice
+const getBrazilianPortugueseVoice = (): SpeechSynthesisVoice | null => {
   const preferredVoices = [
-    'Google US English Female',
-    'Microsoft Zira Desktop',
-    'Samantha',
-    'Victoria'
+    'Google português do Brasil',
+    'Microsoft Maria Desktop - Portuguese (Brazil)',
+    'Luciana',
+    'Helena'
   ];
 
   // First try to find one of our preferred voices
@@ -69,23 +69,25 @@ const getAmericanFemaleVoice = (): SpeechSynthesisVoice | null => {
     if (voice) return voice;
   }
 
-  // If no preferred voice is found, try to find any US English female voice
-  const americanVoice = voices.find(voice => 
-    voice.lang.includes('en-US') && 
+  // Try to find any Brazilian Portuguese female voice
+  const brPortugueseVoice = voices.find(voice => 
+    (voice.lang === 'pt-BR' || voice.lang === 'pt_BR') && 
     (voice.name.toLowerCase().includes('female') || 
-     voice.name.toLowerCase().includes('woman'))
+     voice.name.toLowerCase().includes('mulher') ||
+     voice.name.toLowerCase().includes('feminino'))
   );
 
-  if (americanVoice) return americanVoice;
+  if (brPortugueseVoice) return brPortugueseVoice;
 
-  // Fallback to any English female voice
-  const englishVoice = voices.find(voice => 
-    voice.lang.includes('en') && 
+  // Fallback to any Portuguese voice
+  const portugueseVoice = voices.find(voice => 
+    voice.lang.startsWith('pt') && 
     (voice.name.toLowerCase().includes('female') || 
-     voice.name.toLowerCase().includes('woman'))
+     voice.name.toLowerCase().includes('mulher') ||
+     voice.name.toLowerCase().includes('feminino'))
   );
 
-  return englishVoice || null;
+  return portugueseVoice || null;
 };
 
 export const toggleMute = () => {
@@ -145,56 +147,72 @@ export const getRandomEmotion = (): Emotion => {
   return newEmotion;
 };
 
+// Carioca accent characteristics
+const cariocaAccentModulation = {
+  // Pitch modulation for "s" and "z" palatalization
+  palatalization: 1.1,
+  // Rate variation for melodic intonation
+  melodicRate: 1.05,
+  // Pitch variation for open vowels
+  openVowels: 1.15,
+  // Base pitch for feminine voice
+  femininePitch: 1.2
+};
+
 export const speakMessage = (text: string, emotion: Emotion) => {
   if ('speechSynthesis' in window && !isMuted) {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     
-    const femaleVoice = getAmericanFemaleVoice();
-    if (femaleVoice) {
-      utterance.voice = femaleVoice;
+    const brPortugueseVoice = getBrazilianPortugueseVoice();
+    if (brPortugueseVoice) {
+      utterance.voice = brPortugueseVoice;
     }
 
-    // Base voice settings for American accent
-    utterance.lang = 'en-US';
-    utterance.pitch = 1.2; // Slightly higher pitch for feminine voice
-    utterance.rate = 1.0;  // Normal speaking rate
+    // Base voice settings for Carioca accent
+    utterance.lang = 'pt-BR';
+    utterance.pitch = cariocaAccentModulation.femininePitch;
+    utterance.rate = cariocaAccentModulation.melodicRate;
 
-    // Emotion-specific voice modulations
+    // Emotion-specific voice modulations with Carioca characteristics
     switch (emotion) {
       case 'happy':
       case 'excited':
-        utterance.pitch = 1.4 * emotionIntensity;
-        utterance.rate = 1.15 * emotionIntensity;
+        utterance.pitch = cariocaAccentModulation.femininePitch * 1.2 * emotionIntensity;
+        utterance.rate = cariocaAccentModulation.melodicRate * 1.15 * emotionIntensity;
         break;
       case 'sad':
-        utterance.pitch = 1.1;
-        utterance.rate = 0.85;
+        utterance.pitch = cariocaAccentModulation.femininePitch * 0.9;
+        utterance.rate = cariocaAccentModulation.melodicRate * 0.85;
         break;
       case 'angry':
-        utterance.pitch = 1.3 * emotionIntensity;
-        utterance.rate = 1.2 * emotionIntensity;
+        utterance.pitch = cariocaAccentModulation.femininePitch * 1.3 * emotionIntensity;
+        utterance.rate = cariocaAccentModulation.melodicRate * 1.2 * emotionIntensity;
         break;
       case 'surprised':
-        utterance.pitch = 1.5;
-        utterance.rate = 1.1;
+        utterance.pitch = cariocaAccentModulation.femininePitch * 1.4;
+        utterance.rate = cariocaAccentModulation.melodicRate * 1.1;
         break;
       case 'love':
-        utterance.pitch = 1.3;
-        utterance.rate = 0.95;
+        utterance.pitch = cariocaAccentModulation.femininePitch * 1.2;
+        utterance.rate = cariocaAccentModulation.melodicRate * 0.95;
         break;
       case 'thinking':
-        utterance.pitch = 1.2;
-        utterance.rate = 0.9;
+        utterance.pitch = cariocaAccentModulation.femininePitch * 1.1;
+        utterance.rate = cariocaAccentModulation.melodicRate * 0.9;
         break;
       case 'sleepy':
-        utterance.pitch = 1.1;
-        utterance.rate = 0.8;
+        utterance.pitch = cariocaAccentModulation.femininePitch * 0.9;
+        utterance.rate = cariocaAccentModulation.melodicRate * 0.8;
         break;
       default:
-        utterance.pitch = 1.2;
-        utterance.rate = 1.0;
+        utterance.pitch = cariocaAccentModulation.femininePitch;
+        utterance.rate = cariocaAccentModulation.melodicRate;
     }
+
+    // Apply Carioca-specific modulations
+    utterance.pitch *= cariocaAccentModulation.palatalization;
+    utterance.rate *= cariocaAccentModulation.melodicRate;
 
     window.speechSynthesis.speak(utterance);
   }
