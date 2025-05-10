@@ -18,6 +18,7 @@ function App() {
   const [hasInteracted, setHasInteracted] = useState(false);
   const [silenceTimer, setSilenceTimer] = useState<NodeJS.Timeout | null>(null);
   const [interimTranscript, setInterimTranscript] = useState('');
+  const [onMessageCallback, setOnMessageCallback] = useState<((message: string) => void) | null>(null);
 
   useEffect(() => {
     const blinkTimer = setInterval(() => {
@@ -62,12 +63,8 @@ function App() {
 
         if (event.results[0].isFinal) {
           const finalTranscript = transcript.trim();
-          if (finalTranscript) {
-            const chatContainer = document.querySelector('[data-chat-input]') as HTMLInputElement;
-            if (chatContainer) {
-              chatContainer.value = finalTranscript;
-              chatContainer.dispatchEvent(new Event('submit', { bubbles: true }));
-            }
+          if (finalTranscript && onMessageCallback) {
+            onMessageCallback(finalTranscript);
           }
           recognition.stop();
         }
@@ -78,7 +75,7 @@ function App() {
         
         const timer = setTimeout(() => {
           recognition.stop();
-        }, 5000); // Stop after 5 seconds maximum
+        }, 5000);
         
         setSilenceTimer(timer);
       };
@@ -97,7 +94,7 @@ function App() {
 
       setRecognition(recognition);
     }
-  }, []);
+  }, [onMessageCallback]);
 
   const handleSplashComplete = () => {
     setShowSplash(false);
@@ -150,7 +147,10 @@ function App() {
           
           {showChat && (
             <div className="w-full md:w-1/2 h-[500px]">
-              <ChatContainer onEmotionChange={setCurrentEmotion} />
+              <ChatContainer 
+                onEmotionChange={setCurrentEmotion} 
+                setOnMessageCallback={setOnMessageCallback}
+              />
             </div>
           )}
         </div>
