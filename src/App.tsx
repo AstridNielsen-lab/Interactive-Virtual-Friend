@@ -16,6 +16,8 @@ function App() {
   const [isMuted, setIsMuted] = useState(false);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [silenceTimer, setSilenceTimer] = useState<NodeJS.Timeout | null>(null);
+  const [interimTranscript, setInterimTranscript] = useState('');
 
   useEffect(() => {
     const blinkTimer = setInterval(() => {
@@ -40,29 +42,62 @@ function App() {
     if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = false;
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = 'pt-BR';
       
+      recognition.onstart = () => {
+        setShowChat(true);
+        setHasInteracted(true);
+        setInterimTranscript('');
+        if (silenceTimer) clearTimeout(silenceTimer);
+      };
+
       recognition.onresult = (event) => {
-        const text = event.results[event.results.length - 1][0].transcript;
-        if (text.trim()) {
-          const chatContainer = document.querySelector('[data-chat-input]') as HTMLInputElement;
-          if (chatContainer) {
-            chatContainer.value = text;
-            chatContainer.dispatchEvent(new Event('submit', { bubbles: true }));
+        const transcript = Array.from(event.results)
+          .map(result => result[0].transcript)
+          .join('');
+
+        setInterimTranscript(transcript);
+
+        if (event.results[0].isFinal) {
+          const finalTranscript = transcript.trim();
+          if (finalTranscript) {
+            const chatContainer = document.querySelector('[data-chat-input]') as HTMLInputElement;
+            if (chatContainer) {
+              chatContainer.value = finalTranscript;
+              chatContainer.dispatchEvent(new Event('submit', { bubbles: true }));
+            }
           }
+          recognition.stop();
         }
       };
 
+      recognition.onaudiostart = () => {
+        if (silenceTimer) clearTimeout(silenceTimer);
+        
+        const timer = setTimeout(() => {
+          recognition.stop();
+        }, 5000); // Stop after 5 seconds maximum
+        
+        setSilenceTimer(timer);
+      };
+
       recognition.onend = () => {
-        if (isListening && !pushToTalk) {
-          recognition.start();
-        }
+        if (silenceTimer) clearTimeout(silenceTimer);
+        setIsListening(false);
+        setPushToTalk(false);
+        setInterimTranscript('');
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        recognition.stop();
       };
 
       setRecognition(recognition);
     }
-  }, [isListening, pushToTalk]);
+  }, []);
 
   const handleSplashComplete = () => {
     setShowSplash(false);
@@ -74,7 +109,6 @@ function App() {
     
     if (isListening) {
       recognition.stop();
-      setIsListening(false);
     } else {
       recognition.start();
       setIsListening(true);
@@ -89,7 +123,6 @@ function App() {
       setPushToTalk(true);
     } else {
       recognition.stop();
-      setPushToTalk(false);
     }
   };
 
@@ -110,7 +143,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 flex flex-col">
       <main className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-4xl flex flex-col md:flex-row items-center justify-center gap-8">
+        <div className="w-full max-w-6xl flex flex-col md:flex-row items-center justify-center gap-8">
           <div className="w-full md:w-1/2">
             <VirtualFriend currentEmotion={currentEmotion} blinking={blinking} />
           </div>
@@ -123,7 +156,13 @@ function App() {
         </div>
       </main>
 
-      <div className="fixed bottom-8 right-8 flex flex-col gap-4">
+      <div className="fixed bottom-8 left-0 right-0 flex justify-center items-center gap-4 px-4">
+        {interimTranscript && (
+          <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-white text-sm">
+            {interimTranscript}
+          </div>
+        )}
+        
         <button
           onClick={handleToggleMute}
           className={`${
