@@ -142,14 +142,14 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 flex flex-col">
-      <main className="flex-1 flex items-center justify-center p-4">
+      <main className="flex-1 flex items-center justify-center p-4 pb-32">
         <div className="w-full max-w-6xl flex flex-col md:flex-row items-center justify-center gap-8">
           <div className="w-full md:w-1/2">
             <VirtualFriend currentEmotion={currentEmotion} blinking={blinking} />
           </div>
           
           {showChat && (
-            <div className="w-full md:w-1/2 h-[600px]">
+            <div className="w-full md:w-1/2 h-[500px]">
               <ChatContainer onEmotionChange={setCurrentEmotion} />
             </div>
           )}
