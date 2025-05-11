@@ -46,9 +46,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
           </p>
           <ul className="text-gray-200 mb-6 space-y-2">
             <li>• Dynamic emotional expressions</li>
-            <li>• Voice interactions</li>
-            <li>• Text chat with ASCII art</li>
-            <li>• Responsive design</li>
+            
           </ul>
           <button
             onClick={handleConsent}
