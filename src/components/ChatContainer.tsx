@@ -9,10 +9,9 @@ import { v4 as uuidv4 } from 'https://jspm.dev/uuid';
 
 interface ChatContainerProps {
   onEmotionChange: (emotion: Emotion) => void;
-  setOnMessageCallback: (callback: (message: string) => void) => void;
 }
 
-const ChatContainer: React.FC<ChatContainerProps> = ({ onEmotionChange, setOnMessageCallback }) => {
+const ChatContainer: React.FC<ChatContainerProps> = ({ onEmotionChange }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [userName, setUserName] = useState('');
@@ -36,11 +35,12 @@ const ChatContainer: React.FC<ChatContainerProps> = ({ onEmotionChange, setOnMes
     } else {
       setUserName(userData.name);
       
+      // Start proactive chat after a delay
       const proactiveTimer = setInterval(() => {
         const lastInteraction = new Date(userData.lastInteraction);
         const timeSinceLastInteraction = Date.now() - lastInteraction.getTime();
         
-        if (timeSinceLastInteraction > 5 * 60 * 1000) {
+        if (timeSinceLastInteraction > 5 * 60 * 1000) { // 5 minutes
           const proactiveMessage: Message = {
             id: uuidv4(),
             text: getRandomProactiveMessage(userData.name),
@@ -54,19 +54,13 @@ const ChatContainer: React.FC<ChatContainerProps> = ({ onEmotionChange, setOnMes
           speakMessage(proactiveMessage.text, 'excited');
           addMessage(proactiveMessage);
         }
-      }, 60000);
+      }, 60000); // Check every minute
       
       return () => clearInterval(proactiveTimer);
     }
   }, [onEmotionChange]);
 
-  useEffect(() => {
-    setOnMessageCallback((message: string) => handleSendMessage(message));
-  }, [setOnMessageCallback]);
-
   const handleSendMessage = async (text: string) => {
-    if (!text.trim()) return;
-
     const userMessage: Message = {
       id: uuidv4(),
       text,
@@ -80,7 +74,8 @@ const ChatContainer: React.FC<ChatContainerProps> = ({ onEmotionChange, setOnMes
     
     try {
       if (!userName) {
-        const name = text.split(' ')[0];
+        // Handle name collection
+        const name = text.split(' ')[0]; // Get first name
         setUserName(name);
         saveUserData({ name });
         
